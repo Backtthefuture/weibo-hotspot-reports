@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微博热搜产品创意分析报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #333; font-size: 28px; margin-bottom: 10px; }
+        .header .meta { color: #666; font-size: 14px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-card .number { font-size: 32px; font-weight: bold; }
+        .stat-card .label { font-size: 12px; opacity: 0.9; margin-top: 5px; }
+        .topic-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .topic-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .topic-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .rank {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .rank.top3 { background: linear-gradient(135deg, #ffd93d, #f4a000); }
+        .title-text { font-size: 18px; font-weight: 600; color: #333; }
+        .heat { color: #ff6b6b; font-size: 14px; }
+        .label {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .label-new { background: #ff3852; color: white; }
+        .label-hot { background: #ff9406; color: white; }
+        .score-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .total-score {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .score-excellent { color: #22c55e; }
+        .score-good { color: #f59e0b; }
+        .score-poor { color: #ef4444; }
+        .score-detail {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+        .summary {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .product-idea {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .product-idea h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .product-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .product-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .product-meta-item {
+            background: white;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+        .product-meta-item .label { color: #999; font-size: 12px; }
+        .product-meta-item .value { color: #333; font-weight: 500; margin-top: 4px; }
+        .no-idea {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 14px;
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .legend-dot.excellent { background: #22c55e; }
+        .legend-dot.good { background: #f59e0b; }
+        .legend-dot.poor { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 微博热搜产品创意分析报告</h1>
+            <div class="meta">生成时间: 2026-03-05 09:37</div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="number">15</div>
+                    <div class="label">分析话题</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">4</div>
+                    <div class="label">优秀创意 (≥80分)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">6</div>
+                    <div class="label">良好创意 (60-79分)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">64.4</div>
+                    <div class="label">平均分数</div>
+                </div>
+            </div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot excellent"></div>优秀 (80-100分)</div>
+                <div class="legend-item"><div class="legend-dot good"></div>良好 (60-79分)</div>
+                <div class="legend-item"><div class="legend-dot poor"></div>一般 (&lt;60分)</div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank top3">1</div>
+                    <div>
+                        <div class="title-text">十四届全国人大四次会议开幕会<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 1,069,431</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">61</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 55/80</span>
+                <span>有用度: 85/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 全国人大年度重要会议开幕，审议国家重大政策和发展规划
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">人大政策通</div>
+                <div class="product-desc">一款AI驱动的政策解读App，帮助用户快速理解人大报告要点，分析政策对个人、企业、行业的影响</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">AI解读人大报告、政策关键词提取、个人影响分析、行业趋势预测</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">政策研究者、企业决策者、投资者、关注时政的普通民众</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank top3">2</div>
+                    <div>
+                        <div class="title-text">普京说考虑主动给欧洲断气<span class="label label-hot">热</span></div>
+                        <div class="heat">🔥 789,933</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">68</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 70/80</span>
+                <span>有用度: 60/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 俄罗斯威胁断供欧洲天然气，地缘政治风险升级
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">能源安全预警</div>
+                <div class="product-desc">实时监控全球能源地缘政治风险，为用户提供个性化的能源成本影响分析和应对方案</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">全球能源价格监控、地缘政治风险预警、家庭能源成本计算器、替代能源方案推荐</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">能源贸易商、制造业企业、关注能源成本的家庭用户</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank top3">3</div>
+                    <div>
+                        <div class="title-text">在中国式现代化新征程上策马奔腾</div>
+                        <div class="heat">🔥 625,255</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-poor">32</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 30/80</span>
+                <span>有用度: 40/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 中国式现代化建设主题宣传
+            </div>
+
+            <div class="no-idea">
+                <em>综合评分不足60分，暂不生成产品创意</em>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">4</div>
+                    <div>
+                        <div class="title-text">比亚迪今晚发布二代刀片及闪充<span class="label label-hot">商</span></div>
+                        <div class="heat">🔥 574,677</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-excellent">86</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 85/80</span>
+                <span>有用度: 90/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 比亚迪发布新一代电池和快充技术，新能源汽车技术再突破
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">充电桩雷达</div>
+                <div class="product-desc">专为新能源车主打造的充电桩导航App，实时显示充电桩状态，智能推荐最优充电方案</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">附近充电桩实时状态、闪充桩识别、充电路线规划、排队预测、充电成本对比</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">新能源车主、网约车司机、长途出行用户</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">5</div>
+                    <div>
+                        <div class="title-text">物业费越来越难收</div>
+                        <div class="heat">🔥 405,348</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">68</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 65/80</span>
+                <span>有用度: 80/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 物业费收缴困难，业主物业矛盾凸显
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">物业服务通</div>
+                <div class="product-desc">连接业主与物业的第三方平台，提供物业服务评价、费用监管、纠纷调解等功能</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">物业服务质量评分、费用透明公示、业主投诉通道、第三方仲裁服务、物业服务招标</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">小区业主、业委会成员、物业公司</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">6</div>
+                    <div>
+                        <div class="title-text">2025年GDP增长5%<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 363,375</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-poor">50</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 45/80</span>
+                <span>有用度: 70/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 2025年中国经济数据公布，GDP增长5%
+            </div>
+
+            <div class="no-idea">
+                <em>综合评分不足60分，暂不生成产品创意</em>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">7</div>
+                    <div>
+                        <div class="title-text">伊朗袭击以国防部大楼<span class="label label-hot">热</span></div>
+                        <div class="heat">🔥 361,318</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-poor">54</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 60/80</span>
+                <span>有用度: 30/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 伊朗袭击以色列，中东局势升级
+            </div>
+
+            <div class="no-idea">
+                <em>综合评分不足60分，暂不生成产品创意</em>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">8</div>
+                    <div>
+                        <div class="title-text">什么水果一听就很东北</div>
+                        <div class="heat">🔥 355,407</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-excellent">85</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 90/80</span>
+                <span>有用度: 65/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 东北特色水果文化讨论
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">地域美食地图</div>
+                <div class="product-desc">探索中国各地特色美食和农产品的App，不仅有购买渠道，更有背后的文化故事</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">全国特色美食地图、地域水果/食材介绍、购买渠道、文化故事、美食打卡</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">美食爱好者、旅游爱好者、地方特产消费者</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">9</div>
+                    <div>
+                        <div class="title-text">20岁小伙长期戴骨传导耳机致聋</div>
+                        <div class="heat">🔥 317,800</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-excellent">83</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 80/80</span>
+                <span>有用度: 95/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 长期佩戴骨传导耳机导致听力损伤案例
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">听力健康守护</div>
+                <div class="product-desc">监测用户的耳机使用习惯，智能提醒保护听力，提供个性化听力健康方案</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">耳机使用时长监控、音量提醒、听力测试、用耳习惯分析、听力保护建议</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">耳机重度用户、音乐爱好者、上班族、学生</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">10</div>
+                    <div>
+                        <div class="title-text">2025新能源汽车产量超1600万辆<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 308,368</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">65</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 60/80</span>
+                <span>有用度: 85/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 新能源汽车产业数据公布，产量创新高
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">电车百科</div>
+                <div class="product-desc">新能源汽车一站式知识和服务平台，帮助用户从选车到养车全流程决策</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">车型对比、续航计算、充电地图、用车成本分析、二手车估值、养车知识</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">新能源车意向用户、新车主、二手车买家</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">11</div>
+                    <div>
+                        <div class="title-text">2025主要目标任务顺利完成<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 289,824</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-poor">34</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 30/80</span>
+                <span>有用度: 50/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 2025年目标任务完成情况通报
+            </div>
+
+            <div class="no-idea">
+                <em>综合评分不足60分，暂不生成产品创意</em>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">12</div>
+                    <div>
+                        <div class="title-text">中东局势彻底失控</div>
+                        <div class="heat">🔥 282,535</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-poor">49</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 55/80</span>
+                <span>有用度: 25/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 中东地区局势持续恶化
+            </div>
+
+            <div class="no-idea">
+                <em>综合评分不足60分，暂不生成产品创意</em>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">13</div>
+                    <div>
+                        <div class="title-text">曝十日终焉主演王天辰<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 258,554</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">78</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 85/80</span>
+                <span>有用度: 50/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 悬疑剧《十日终焉》演员阵容曝光
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">短剧追踪器</div>
+                <div class="product-desc">专注短剧的追剧App，聚合各平台短剧资源，提供一站式追剧体验</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">短剧上新提醒、剧情讨论社区、演员作品追踪、倍速播放、投屏功能</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">短剧爱好者、追剧用户</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">14</div>
+                    <div>
+                        <div class="title-text">最长学期后迎来史上最短学期</div>
+                        <div class="heat">🔥 256,776</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-good">71</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 70/80</span>
+                <span>有用度: 75/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 学校学期时长调整引发讨论
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">学期规划师</div>
+                <div class="product-desc">帮助学生更好地规划和管理学期学习生活，适应不同的学期节奏</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">课程表管理、作业提醒、考试倒计时、学期规划建议、学习效率分析</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">大学生、高中生、研究生</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="topic-card">
+            <div class="topic-header">
+                <div class="topic-title">
+                    <div class="rank">15</div>
+                    <div>
+                        <div class="title-text">没见过气血虚成这样的<span class="label label-new">新</span></div>
+                        <div class="heat">🔥 255,828</div>
+                    </div>
+                </div>
+                <div class="score-badge">
+                    <span class="total-score score-excellent">82</span>
+                </div>
+            </div>
+            <div class="score-detail">
+                <span>有趣度: 80/80</span>
+                <span>有用度: 90/20</span>
+            </div>
+            <div class="summary">
+                <strong>事件脉络:</strong> 亚健康气血虚问题引发热议
+            </div>
+
+            <div class="product-idea">
+                <h3>💡 产品创意</h3>
+                <div class="product-name">气血调理助手</div>
+                <div class="product-desc">基于中医理论的亚健康调理App，提供个性化的气血调理方案</div>
+                <div class="product-meta">
+                    <div class="product-meta-item">
+                        <div class="label">核心功能</div>
+                        <div class="value">体质测试、食疗方案推荐、作息建议、中医养生知识、症状自测</div>
+                    </div>
+                    <div class="product-meta-item">
+                        <div class="label">目标用户</div>
+                        <div class="value">亚健康人群、养生爱好者、气血虚困扰者</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
